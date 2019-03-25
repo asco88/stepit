@@ -27,6 +27,26 @@ Example of usage with Express
 	    workflow.startWorkflow(req, res);
 	})
 
+You can add mask for the response, each mask will be taken from data.variables straight into the response body
+
+    const options = {
+        responseBodyMask: ['user']
+    }
+
+    const workflow = new Workflow(options);
+    const getUserStep = new Step('get-user', (data, done) => {
+
+        const userid = data.request.params.userId;
+
+        someUserFindingMethod(userid, (user) => {
+        	data.variables = {...data.variables, user: clonedUser}
+            done();
+        })
+    });
+
+The response will contain the user as was added to data.variables
+
+
 You can add as many steps as you like.
 They will be executed in the same order they were added.
 The Workflow guarantees a synchronous execution of each step after the previuos one

@@ -13,8 +13,23 @@ class Step {
 }
 
 class Workflow {
-    constructor() {
+    constructor(options) {
+        this.options = options;
+
+        this.setInitialData();
+
+        this.errorHandler = (data) => {
+            console.log('this is some default error handler ' + JSON.stringify(data));
+        }
+
+        this.responseHandler = () => {
+            this.res.json({});
+        }
+    }
+
+    setInitialData() {
         this.steps = [];
+        this.pos = 0;
         this.data = {
             variables: {},
             errors: {},
@@ -29,18 +44,6 @@ class Workflow {
                 query: {}
             }
         }
-        this.pos = 0;
-
-        this.errorHandler = (data) => {
-            console.log('this is some default error handler ' + JSON.stringify(data));
-        }
-        this.responseHandler = () => {
-            this.res.json({});
-        }
-    }
-
-    setInitialData(data) {
-        this.data.variables = {...this.data.variables, ...data};
     }
 
     setResponse(response) {
@@ -73,11 +76,21 @@ class Workflow {
     }
 
     sendResponse() {
-        this.res.json(this.data.request.body);
+        if (this.options && this.options.responseBodyMask) {
+            this.options.responseBodyMask.forEach(mask => {
+                const maskedVariable = this.data.variables[mask];
+                this.data.response.body = {...this.data.response.body, ...maskedVariable};
+            })
+        }
+
+        this.res.status(this.data.response.status).json(this.data.response.body);
     }
 
     copyRequestOnData(req) {
         this.data.request.body = req.body;
+        this.data.request.params = req.params;
+        this.data.request.query = req.query;
+        this.data.request.headers = req.headers;
     }
 
     copyDataOnResponse() {
@@ -90,7 +103,11 @@ class Workflow {
         var dateTime = `${date} ${time}`;
 
         console.log(`[${dateTime} | step: ${this.steps[this.pos].name}]`);
+
         this.steps[this.pos].performAction(this.data, (nextPos) => {
+
+            console.log(4);
+
             if (Object.keys(this.data.errors).length === 0) {
                 this.pos = nextPos || this.pos + 1;
                 if (this.pos === this.steps.length) {
