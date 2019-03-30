@@ -27,6 +27,14 @@ Example of usage with Express
 	    workflow.startWorkflow(req, res);
 	})
 
+The workflow final data is accessible theough Promise:
+
+    const w = workflow.startWorkflow();
+    w.then(result => {
+        res.send(result);
+    });
+
+    
 You can add mask for the response, each mask will be taken from data.variables straight into the response body
 
     const options = {

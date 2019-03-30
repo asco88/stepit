@@ -13,8 +13,9 @@ class Step {
 }
 
 class Workflow {
-    constructor(options) {
+    constructor(options, timeout) {
         this.options = options;
+        this.timeout = timeout || 5000;
 
         this.setInitialData();
 
@@ -30,6 +31,8 @@ class Workflow {
     setInitialData() {
         this.steps = [];
         this.pos = 0;
+        this.flowComplete = false;
+        this.timeoutms = this.timeout;
         this.data = {
             variables: {},
             errors: {},
@@ -46,17 +49,32 @@ class Workflow {
         }
     }
 
-    setResponse(response) {
-        this.response = response;
-    }
-
-    setPromise(resolve, reject) {
-        this.resolve = resolve;
-        this.reject = reject;
+    resetData() {
+        this.pos = 0;
+        this.flowComplete = false;
+        this.timeoutms = this.timeout;
+        this.data = {
+            variables: {},
+            errors: {},
+            response: {
+                status: 200,
+                body: {}
+            },
+            request: {
+                body: {},
+                headers: {},
+                params: {},
+                query: {}
+            }
+        }
     }
 
     addStep(step) {
         this.steps.push(step);
+    }
+
+    addStepList(stepList) {
+        this.steps = {...this.steps, ...stepList};
     }
 
     setErrorHandler(handler) {
@@ -68,22 +86,40 @@ class Workflow {
     }
 
     startWorkflow(req, res) {
+        this.resetData();
         this.res = res;
 
-        this.copyRequestOnData(req);
-
-        this.startNextStep();
-    }
-
-    sendResponse() {
-        if (this.options && this.options.responseBodyMask) {
-            this.options.responseBodyMask.forEach(mask => {
-                const maskedVariable = this.data.variables[mask];
-                this.data.response.body = {...this.data.response.body, ...maskedVariable};
-            })
+        if (req) {
+            this.copyRequestOnData(req);
         }
 
-        this.res.status(this.data.response.status).json(this.data.response.body);
+        this.startNextStep();
+
+        return new Promise((r, j)=>{
+            var check = () => {
+                if(this.flowComplete) {
+                    this.flowComplete = false;
+
+                    if (this.options && this.options.responseBodyMask) {
+                        this.options.responseBodyMask.forEach(mask => {
+                            const maskedVariable = this.data.variables[mask];
+                            this.data.response.body = {...this.data.response.body, ...maskedVariable};
+                        })
+                    }
+
+                    if (this.res) {
+                        this.res.status(this.data.response.status).json(this.data);
+                    } else {
+                        r(this.data);
+                    }
+                }
+                else if((this.timeoutms -= 100) < 0)
+                    j('timed out!')
+                else
+                    setTimeout(check, 100)
+            }
+            setTimeout(check, 100)
+        })
     }
 
     copyRequestOnData(req) {
@@ -91,10 +127,6 @@ class Workflow {
         this.data.request.params = req.params;
         this.data.request.query = req.query;
         this.data.request.headers = req.headers;
-    }
-
-    copyDataOnResponse() {
-
     }
 
     startNextStep() {
@@ -105,13 +137,10 @@ class Workflow {
         console.log(`[${dateTime} | step: ${this.steps[this.pos].name}]`);
 
         this.steps[this.pos].performAction(this.data, (nextPos) => {
-
-            console.log(4);
-
             if (Object.keys(this.data.errors).length === 0) {
                 this.pos = nextPos || this.pos + 1;
                 if (this.pos === this.steps.length) {
-                    this.sendResponse();
+                    this.flowComplete = true;
                 } else {
                     this.startNextStep();
                 }
