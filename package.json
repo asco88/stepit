@@ -1,6 +1,6 @@
 {
   "name": "stepit",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "create steps based process and simplify its design and development",
   "main": "src/index.js",
   "scripts": {
