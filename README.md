@@ -54,6 +54,17 @@ You can add mask for the response, each mask will be taken from data.variables s
 
 The response will contain the user as was added to data.variables
 
+Each step can start a new 'subworkflow', it can be defined when creating new Step instance:
+    
+    workflow.addStep(new Step('step2', undefined, workflow2));
+
+Or to be added explicitly:
+
+    step.subWorkflow(workflow);
+
+in both cases, the step itself will execute the workflow instead of any action of it's own
+
+
 
 You can add as many steps as you like.
 They will be executed in the same order they were added.
