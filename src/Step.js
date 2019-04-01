@@ -1,3 +1,7 @@
+var today = new Date();
+var { colors } = require('./util');
+
+
 class Step {
     constructor(name, action, workflow) {
         this.name = name;
@@ -8,8 +12,28 @@ class Step {
         }
     }
 
+    getDateTime() {
+        var date = `${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
+        var time = `${today.getHours()}:${today.getMinutes()}:${today.getSeconds()}`;
+        var dateTime = `${date} ${time}`;
+
+        return dateTime;
+    }
+
     setName(name) {
         this.name = name;
+    }
+
+    setPrintStepRunningHandler(handler) {
+        this.printStepRunningHandler = handler;
+    }
+
+    printStepRunning() {
+        if (this.printStepRunningHandler) {
+            this.printStepRunningHandler();
+        } else {
+            console.log(colors.fg.Cyan, `  [${this.getDateTime()} | step: ${this.name}]`, colors.Reset);
+        }
     }
 
     performAction(data, done) {

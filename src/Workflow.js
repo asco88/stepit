@@ -88,8 +88,20 @@ class Workflow {
         this.responseHandler = handler;
     }
 
+    setPrintRunningWorkflowHandler(handler) {
+        this.printRunningWorkflowHandler = handler;
+    }
+
+    printRunningWorkflow() {
+        if (this.printRunningWorkflowHandler) {
+            this.printRunningWorkflowHandler();
+        } else {
+            console.log(colors.fg.Yellow, `${this.getDateTime()} - Workflow '${this.name}' starting..`, colors.Reset);
+        }
+    }
+
     startWorkflow(req, res) {
-        console.log(colors.fg.Yellow, `${this.getDateTime()} - Workflow '${this.name}' starting..`, colors.Reset);
+        this.printRunningWorkflow();
 
         this.resetData();
         this.res = res;
@@ -135,7 +147,7 @@ class Workflow {
     }
 
     startNextStep() {
-        console.log(colors.fg.Cyan, `  [${this.getDateTime()} | step: ${this.steps[this.pos].name}]`, colors.Reset);
+        this.steps[this.pos].printStepRunning();
 
         this.steps[this.pos].performAction(this.data, (nextPos) => {
             if (Object.keys(this.data.errors).length === 0) {
