@@ -18,7 +18,7 @@ Example of usage with Express
 
 	app.post('/steps', (req, res) => {
 	    const workflow = new Workflow();
-	    const step = new Step('step', (data, done) => {
+	    const step = new Step('step', (done, data) => {
 			// do some stuff
 	        done();
 	    });
@@ -34,7 +34,7 @@ The workflow final data is accessible theough Promise:
         res.send(result);
     });
 
-    
+
 You can add mask for the response, each mask will be taken from data.variables straight into the response body
 
     const options = {
@@ -42,7 +42,7 @@ You can add mask for the response, each mask will be taken from data.variables s
     }
 
     const workflow = new Workflow(options);
-    const getUserStep = new Step('get-user', (data, done) => {
+    const getUserStep = new Step('get-user', (done, data) => {
 
         const userid = data.request.params.userId;
 
@@ -55,7 +55,7 @@ You can add mask for the response, each mask will be taken from data.variables s
 The response will contain the user as was added to data.variables
 
 Each step can start a new 'subworkflow', it can be defined when creating new Step instance:
-    
+
     workflow.addStep(new Step('step2', undefined, workflow2));
 
 Or to be added explicitly:
