@@ -149,7 +149,7 @@ class Workflow {
     startNextStep() {
         this.steps[this.pos].printStepRunning();
 
-        this.steps[this.pos].performAction(this.data, (nextPos) => {
+        this.steps[this.pos].performAction((nextPos) => {
             if (Object.keys(this.data.errors).length === 0) {
                 this.pos = nextPos || this.pos + 1;
                 if (this.pos === this.steps.length) {
@@ -162,7 +162,7 @@ class Workflow {
                 console.log(`[${dateTime} | error]`);
                 this.errorHandler(this.data);
             }
-        });
+        }, this.data);
     }
 }
 

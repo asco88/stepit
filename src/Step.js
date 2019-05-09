@@ -36,9 +36,9 @@ class Step {
         }
     }
 
-    performAction(data, done) {
+    performAction(done, data) {
         if (!this.workflow) {
-            this.action(data, done);
+            this.action(done, data);
         } else {
             this.workflow.startWorkflow()
             .then(() => {
@@ -48,7 +48,7 @@ class Step {
     }
 
     subWorkflow(workflow) {
-        this.action = (data, done) => done();
+        this.action = (done, data) => done();
         this.workflow = workflow;
     }
 }
